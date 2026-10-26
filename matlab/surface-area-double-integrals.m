@@ -1,0 +1,84 @@
+u = linspace(0, 2*pi, 40);
+v = linspace(0, 2*pi, 40);
+[U, V] = meshgrid(u, v);
+X = (2 + 8*cos(V)) .* cos(U);
+Y = (2 + 8*cos(V)) .* sin(U);
+Z = 9*sin(V);
+figure;
+surf(X, Y, Z);
+shading interp; colormap jet; xlabel('X'); ylabel('Y'); zlabel('Z');
+title('Daniel Zhang'); axis equal;
+
+f = @(v) abs(2 + 8*cos(v)) .* sqrt(81*cos(v).^2 + 64*sin(v).^2);
+I = integral(f, 0, 2*pi);
+SurfaceArea = 2*pi * I;
+fprintf('Surface area: %f\n', SurfaceArea);
+
+y_top = @(x) 9 + sqrt(2*(1 - ((x-6).^2)/4));
+y_lower_left = @(x) -2*x + 17;
+y_lower_right = @(x) 2*x - 7;
+integrand = @(x, y) x + y;
+I_left = integral(@(x) arrayfun(@(x_val) integral(@(y) integrand(x_val, y), y_lower_left(x_val), y_top(x_val)), x), 4, 6);
+I_right = integral(@(x) arrayfun(@(x_val) integral(@(y) integrand(x_val, y), y_lower_right(x_val), y_top(x_val)), x), 6, 8);
+I_total = I_left + I_right;
+fprintf('Double integral: %f\n', I_total);
+
+f1 = @(t) ( -((9 - 4*t).^2)/2 .* 2 ) + ( ((4 + 2*t).^2)/2 .* (-4) );
+I_C1 = integral(f1, 0, 1);
+f2 = @(t) ( -((5 + 4*t).^2)/2 .* 2 ) + ( ((6 + 2*t).^2)/2 .* 4 );
+I_C2 = integral(f2, 0, 1);
+f3 = @(t) ( -((9 + sqrt(2)*sin(t)).^2)/2 .* (-2*sin(t)) ) + ( ((6 + 2*cos(t)).^2)/2 .* (sqrt(2)*cos(t)) );
+I_C3 = integral(f3, 0, pi);
+fprintf('I_C1: %f\nI_C2: %f\nI_C3: %f\n', I_C1, I_C2, I_C3);
+fprintf('%f, %f, %f\n', I_C1, I_C2, I_C3);
+
+phi = linspace(0, pi/4, 50);
+theta = linspace(0, 2*pi, 50);
+[Phi, Theta] = meshgrid(phi, theta);
+X_sphere = 7 + 2*sin(Phi).*cos(Theta);
+Y_sphere = 6 + 2*sin(Phi).*sin(Theta);
+Z_sphere = 8 + 2*cos(Phi);
+r = linspace(0, sqrt(2), 50);
+theta2 = linspace(0, 2*pi, 50);
+[R, Theta2] = meshgrid(r, theta2);
+X_cone = 7 + R.*cos(Theta2);
+Y_cone = 6 + R.*sin(Theta2);
+Z_cone = 8 + R;
+figure;
+hold on;
+surf(X_sphere, Y_sphere, Z_sphere, 'FaceColor', 'r', 'FaceAlpha', 0.85, 'EdgeColor', 'none');
+surf(X_cone, Y_cone, Z_cone, 'FaceColor', [1 0.85 0.7], 'FaceAlpha', 0.95, 'EdgeColor', 'none');
+camlight; lighting gouraud; xlabel('x'); ylabel('y'); zlabel('z');
+axis equal; grid on; view(45,30);
+title('Daniel Zhang'); hold off;
+
+phi = linspace(0, pi/4, 50);
+theta = linspace(0, 2*pi, 50);
+[Phi, Theta] = meshgrid(phi, theta);
+X_sphere = 7 + 2*sin(Phi).*cos(Theta);
+Y_sphere = 6 + 2*sin(Phi).*sin(Theta);
+Z_sphere = 8 + 2*cos(Phi);
+Nx_sphere = (X_sphere - 7) / 2;
+Ny_sphere = (Y_sphere - 6) / 2;
+Nz_sphere = (Z_sphere - 8) / 2;
+r = linspace(0, sqrt(2), 50);
+theta2 = linspace(0, 2*pi, 50);
+[R, Theta2] = meshgrid(r, theta2);
+X_cone = 7 + R.*cos(Theta2);
+Y_cone = 6 + R.*sin(Theta2);
+Z_cone = 8 + R;
+Nx_cone = -cos(Theta2) / sqrt(2);
+Ny_cone = -sin(Theta2) / sqrt(2);
+Nz_cone = ones(size(Theta2)) / sqrt(2);
+figure;
+hold on;
+surf(X_sphere, Y_sphere, Z_sphere, 'FaceColor', 'r', 'FaceAlpha', 0.85, 'EdgeColor', 'none');
+surf(X_cone, Y_cone, Z_cone, 'FaceColor', [1 0.85 0.7], 'FaceAlpha', 0.95, 'EdgeColor', 'none');
+skip = 5;
+quiver3(X_sphere(1:skip:end,1:skip:end), Y_sphere(1:skip:end,1:skip:end), Z_sphere(1:skip:end,1:skip:end), ...
+    Nx_sphere(1:skip:end,1:skip:end), Ny_sphere(1:skip:end,1:skip:end), Nz_sphere(1:skip:end,1:skip:end), 0.5, 'k', 'LineWidth', 1);
+quiver3(X_cone(1:skip:end,1:skip:end), Y_cone(1:skip:end,1:skip:end), Z_cone(1:skip:end,1:skip:end), ...
+    Nx_cone(1:skip:end,1:skip:end), Ny_cone(1:skip:end,1:skip:end), Nz_cone(1:skip:end,1:skip:end), 0.5, 'k', 'LineWidth', 1);
+camlight; lighting gouraud; xlabel('x'); ylabel('y'); zlabel('z');
+axis equal; grid on; view(45,30); title('Daniel Zhang'); hold off;
+saveas(gcf, 'Johnny_Good_IceCreamCone_Normals.png');
