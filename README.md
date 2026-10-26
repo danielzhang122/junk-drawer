@@ -1,8 +1,10 @@
 # junk-drawer
 
-Stuff I wrote that doesn't fit anywhere else. Not organized. Will never be organized.
+stuff i wrote that doesnt rlly fit anywhere else
 
-Every engineer has a drawer full of random cables they swear they'll sort one day. This is that, but code.
+mostly just proof ive written in languages other than python
+
+most of it is incomplete, broken, abandoned, etc. i had claude sort it the best it could
 
 | Folder | Language | What's in there |
 |---|---|---|
@@ -12,8 +14,4 @@ Every engineer has a drawer full of random cables they swear they'll sort one da
 | `julia/` | Julia | Numerical methods quizzes (MECHTRON 3X03) |
 | `cpp/` | C++ | Hello world. Everyone has one |
 
-Most of the embedded stuff and all the math is from McMaster courses. The rest was me messing around.
-
-The WiFi sketch has placeholder credentials. Put your own in if you want it to connect to anything.
-
-Bigger projects get their own repos: [quadruped-robot](https://github.com/danielzhang122/quadruped-robot), [globe-ghost](https://github.com/danielzhang122/globe-ghost), [sfwreng-3k04-pacemaker](https://github.com/danielzhang122/sfwreng-3k04-pacemaker).
+honestly i havent checked any of this so for all i know these descriptions are completely inaccurate. tbh i dont even remember writing half of it
