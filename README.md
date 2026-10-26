@@ -4,7 +4,7 @@ stuff i wrote that doesnt rlly fit anywhere else
 
 mostly just proof ive written in languages other than python
 
-lots of it is incomplete, broken, abandoned, etc. i had claude sort it the best it could
+a lot of it is course labs and quick experiments, so not everything is finished. i had claude sort it the best it could
 
 | Folder | Language | What's in there |
 |---|---|---|
