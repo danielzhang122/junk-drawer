@@ -4,7 +4,7 @@ stuff i wrote that doesnt rlly fit anywhere else
 
 mostly just proof ive written in languages other than python
 
-most of it is incomplete, broken, abandoned, etc. i had claude sort it the best it could
+lots of it is incomplete, broken, abandoned, etc. i had claude sort it the best it could
 
 | Folder | Language | What's in there |
 |---|---|---|
@@ -14,4 +14,4 @@ most of it is incomplete, broken, abandoned, etc. i had claude sort it the best 
 | `julia/` | Julia | Numerical methods quizzes (MECHTRON 3X03) |
 | `cpp/` | C++ | Hello world. Everyone has one |
 
-honestly i havent checked any of this so for all i know these descriptions are completely inaccurate. tbh i dont even remember writing half of it
+honestly i havent checked any of this so for all i know these descriptions are completely inaccurate. tbh i dont even remember writing half of this code
