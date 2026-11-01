@@ -13,5 +13,6 @@ a lot of it is course labs and quick experiments, so not everything is finished.
 | `matlab/` | MATLAB | Stats lab with histograms, multivariable calc: contours and gradient fields, TNB frames and curvature, line/surface/triple integrals, Fourier series |
 | `julia/` | Julia | Numerical methods quizzes (MECHTRON 3X03) |
 | `cpp/` | C++ | Hello world. Everyone has one |
+| `web/` | HTML/JS | `beer-goggles.html`: particles spell a word, BAC slider makes it progressively more drunk. Made while drunk |
 
 honestly i havent checked any of this so for all i know these descriptions are completely inaccurate. tbh i dont even remember writing half of this code
