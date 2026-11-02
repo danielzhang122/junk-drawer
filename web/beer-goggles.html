@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>beer goggles</title>
+<style>
+  html,body{margin:0;height:100%;background:#07060b;overflow:hidden;font-family:ui-monospace,Menlo,Consolas,monospace;color:#ddd}
+  canvas{display:block;width:100vw;height:100vh;touch-action:none}
+  #hud{position:fixed;left:16px;bottom:16px;background:#0008;padding:10px 14px;border-radius:10px;backdrop-filter:blur(4px);font-size:13px;user-select:none}
+  #hud input[type=range]{width:180px;vertical-align:middle;accent-color:#f5b041}
+  #bac{color:#f5b041;font-weight:bold}
+  #hint{opacity:.6;margin-top:6px}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud">
+  BAC <input id="slider" type="range" min="0" max="0.30" step="0.005" value="0.08">
+  <span id="bac">0.080</span> <span id="mood"></span>
+  <div id="hint">type a word · enter to show it · click to explode · hold space to sober up</div>
+</div>
+<script>
+const cv = document.getElementById('c'), cx = cv.getContext('2d');
+const slider = document.getElementById('slider'), bacEl = document.getElementById('bac'), moodEl = document.getElementById('mood');
+let W, H, DPR = Math.min(devicePixelRatio || 1, 2);
+let parts = [], word = 'drunk', typed = '', t = 0;
+const mouse = { x: -1e4, y: -1e4, lx: -1e4, ly: -1e4 };   // real pointer + "lagged" pointer the particles actually see
+const moods = [[0,'sober'],[0.03,'buzzed'],[0.08,'tipsy'],[0.12,'drunk'],[0.18,'wasted'],[0.25,'call an uber']];
+
+function bac() { return space ? 0 : +slider.value; }
+let space = false;
+
+function resize() {
+  W = innerWidth; H = innerHeight;
+  cv.width = W * DPR; cv.height = H * DPR;
+  cx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  setWord(word);
+}
+
+// Draw the word on a hidden canvas, then put one particle target on every Nth lit pixel.
+function setWord(w) {
+  word = w || 'drunk';
+  const off = document.createElement('canvas'); off.width = W; off.height = H;
+  const o = off.getContext('2d');
+  let size = Math.min(H * 0.4, (W * 0.9) / Math.max(word.length * 0.6, 1));
+  o.font = `900 ${size}px Impact, "Arial Black", sans-serif`;
+  o.textAlign = 'center'; o.textBaseline = 'middle'; o.fillStyle = '#fff';
+  o.fillText(word, W / 2, H / 2);
+  const data = o.getImageData(0, 0, W, H).data;
+  const step = Math.max(4, Math.round(Math.sqrt((W * H) / 9000)));
+  const targets = [];
+  for (let y = 0; y < H; y += step)
+    for (let x = 0; x < W; x += step)
+      if (data[(y * W + x) * 4 + 3] > 128) targets.push([x, y]);
+  targets.sort(() => Math.random() - 0.5);
+  // reuse existing particles so they fly over to the new word instead of popping
+  while (parts.length < targets.length)
+    parts.push({ x: Math.random() * W, y: Math.random() * H, vx: 0, vy: 0, seed: Math.random() * 1000, hue: 0 });
+  parts.length = targets.length;
+  parts.forEach((p, i) => { p.tx = targets[i][0]; p.ty = targets[i][1]; p.hue = 20 + (p.tx / W) * 40; });
+}
+
+function explode(x, y) {
+  for (const p of parts) {
+    const dx = p.x - x, dy = p.y - y, d = Math.hypot(dx, dy) + 1;
+    const f = 2500 / (d + 40);
+    p.vx += (dx / d) * f + (Math.random() - 0.5) * 8;
+    p.vy += (dy / d) * f + (Math.random() - 0.5) * 8;
+  }
+}
+
+function frame() {
+  const b = bac(), drunk = b / 0.3;       // 0..1
+  t += 1 / 60;
+
+  // laggy cursor: the drunker you are, the slower your brain catches up to your hand
+  const lag = 0.35 - drunk * 0.32;
+  mouse.lx += (mouse.x - mouse.lx) * lag;
+  mouse.ly += (mouse.y - mouse.ly) * lag;
+
+  // trails: low alpha clear = long smeary trails
+  cx.globalCompositeOperation = 'source-over';
+  cx.fillStyle = `rgba(7,6,11,${0.35 - drunk * 0.29})`;
+  cx.fillRect(0, 0, W, H);
+
+  // whole-world sway
+  const swayA = Math.sin(t * 0.7) * 0.06 * drunk, swayX = Math.sin(t * 0.43) * 30 * drunk, swayY = Math.cos(t * 0.31) * 18 * drunk;
+
+  const spring = 0.06 - drunk * 0.045, damp = 0.86 + drunk * 0.08, wob = drunk * 1.6;
+  for (const p of parts) {
+    // spring toward home, plus a noisy wander that gets bigger with BAC
+    p.vx += (p.tx - p.x) * spring + Math.sin(t * 2 + p.seed) * wob;
+    p.vy += (p.ty - p.y) * spring + Math.cos(t * 1.7 + p.seed * 1.3) * wob;
+    // shove away from the (lagged) cursor
+    const dx = p.x - mouse.lx, dy = p.y - mouse.ly, d2 = dx * dx + dy * dy;
+    if (d2 < 120 * 120) { const d = Math.sqrt(d2) + 0.1, f = (120 - d) * 0.12; p.vx += dx / d * f; p.vy += dy / d * f; }
+    p.vx *= damp; p.vy *= damp;
+    p.x += p.vx; p.y += p.vy;
+  }
+
+  // double vision: draw the scene up to 3 times with RGB-ish tints, split apart by BAC
+  const split = drunk * 26;
+  const ghosts = drunk < 0.05 ? [[0, 0, null]] : [
+    [-split * Math.cos(t), -split * Math.sin(t * 1.3) * 0.5, 'hsla(350,100%,60%,'],
+    [ split * Math.cos(t),  split * Math.sin(t * 1.3) * 0.5, 'hsla(190,100%,60%,'],
+    [0, 0, null]];
+  cx.globalCompositeOperation = 'lighter';
+  for (const [ox, oy, tint] of ghosts) {
+    cx.save();
+    cx.translate(W / 2 + swayX + ox, H / 2 + swayY + oy); cx.rotate(swayA); cx.translate(-W / 2, -H / 2);
+    for (const p of parts) {
+      const sp = Math.min(Math.hypot(p.vx, p.vy), 20);
+      cx.fillStyle = tint ? tint + '0.45)' : `hsla(${p.hue + sp * 6},95%,${55 + sp * 2}%,0.9)`;
+      const r = 1.6 + sp * 0.12;
+      cx.fillRect(p.x - r, p.y - r, r * 2, r * 2);
+    }
+    cx.restore();
+  }
+
+  // vignette that closes in as you drink
+  cx.globalCompositeOperation = 'source-over';
+  const g = cx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * (0.6 - drunk * 0.35), W / 2, H / 2, Math.max(W, H) * 0.75);
+  g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, `rgba(0,0,0,${0.15 + drunk * 0.7})`);
+  cx.fillStyle = g; cx.fillRect(0, 0, W, H);
+
+  // what you're typing
+  if (typed) {
+    cx.fillStyle = '#f5b041'; cx.font = '20px ui-monospace,monospace'; cx.textAlign = 'center';
+    cx.fillText(typed + (Math.floor(t * 2) % 2 ? '_' : ' '), W / 2 + swayX, H - 40);
+  }
+
+  bacEl.textContent = b.toFixed(3);
+  moodEl.textContent = '(' + moods.filter(m => b >= m[0]).pop()[1] + ')';
+  requestAnimationFrame(frame);
+}
+
+addEventListener('resize', resize);
+cv.addEventListener('pointermove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+cv.addEventListener('pointerleave', () => { mouse.x = mouse.y = -1e4; });
+cv.addEventListener('pointerdown', e => { mouse.x = mouse.lx = e.clientX; mouse.y = mouse.ly = e.clientY; explode(e.clientX, e.clientY); });
+addEventListener('keydown', e => {
+  if (e.target === slider) return;
+  if (e.key === ' ') { space = true; e.preventDefault(); return; }
+  if (e.key === 'Enter') { if (typed) setWord(typed); typed = ''; }
+  else if (e.key === 'Backspace') typed = typed.slice(0, -1);
+  else if (e.key.length === 1 && typed.length < 14) typed += e.key;
+});
+addEventListener('keyup', e => { if (e.key === ' ') space = false; });
+
+resize(); frame();
+</script>
+</body>
+</html>
